@@ -21,10 +21,13 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 
 
+import com.google.android.gms.common.util.Function;
 import com.google.android.gms.vision.text.Text;
 import com.google.android.gms.vision.text.TextBlock;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import io.github.edufolly.fluttermobilevision.ui.GraphicOverlay;
 
@@ -37,6 +40,9 @@ public class OcrGraphic extends GraphicOverlay.Graphic {
     private static final int TEXT_COLOR = Color.WHITE;
     private static final Paint rectPaint = new Paint();
     private static final Paint textPaint = new Paint();
+    private boolean breaks = false;
+
+
 
     static {
         rectPaint.setColor(TEXT_COLOR);
@@ -49,12 +55,15 @@ public class OcrGraphic extends GraphicOverlay.Graphic {
 
     private boolean showText;
     private volatile TextBlock textBlock;
+    private OcrCaptureActivity activity;
+    private String pattern;
 
-    OcrGraphic(GraphicOverlay overlay, boolean showText) {
+    OcrGraphic(GraphicOverlay overlay, boolean showText, OcrCaptureActivity activity, String pattern) {
         super(overlay);
 
         this.showText = showText;
-
+        this.activity = activity;
+        this.pattern = pattern;
         postInvalidate();
     }
 
@@ -89,19 +98,82 @@ public class OcrGraphic extends GraphicOverlay.Graphic {
         if (text == null) {
             return;
         }
-
+if(breaks == true) {return;}
         // Draws the bounding box around the TextBlock.
         RectF rect = new RectF(text.getBoundingBox());
         rect = translateRect(rect);
-        canvas.drawRect(rect, rectPaint);
+//        canvas.drawRect(rect, rectPaint);
 
         // Break the text into multiple lines and draw each one according to its own bounding box.
         List<? extends Text> textComponents = text.getComponents();
         for (Text currentText : textComponents) {
             float left = translateX(currentText.getBoundingBox().left);
             float bottom = translateY(currentText.getBoundingBox().bottom);
-            if (showText) {
-                canvas.drawText(currentText.getValue(), left, bottom, textPaint);
+
+
+//                if(currentText.getValue().matches("^T\\\\d{6}(C||c)$")) {
+//                    android.util.Log.d("razi", currentText.getValue());
+//                }0O
+//                09/08/18 20: 33
+//                ^[$]\d{2}.\d{2}$
+                //  ^[$]\d{2}.\d{2}$
+            android.util.Log.d("razi", pattern);
+if(pattern.matches("1")){
+
+        android.util.Log.d("razi", pattern);
+        android.util.Log.d("razi", "in 1");
+//        android.util.Log.d("razi", currentText.getValue());
+        if (currentText.getValue().matches("^T\\d{6}(C||c)$")) {
+//                                        "^XXXXXXXXXX\\d{4}$" \d{2}/\d{2}/\d{2} [0-3]?[0-9]/[0-3]?[0-9]/(?:[0-9]{2})?[0-9]{2} ^T\d{6}(C||c)$ DATE 09/08/18
+            android.util.Log.d("razi", "number plate");
+//            android.util.Log.d("razi", currentText.getValue());
+            activity.lists.add(new MyTextBlock(text));
+            canvas.drawText("Car Number found", left, bottom, textPaint);
+            activity.textDetected(activity.lists);
+            breaks = true;
+            break;
+        }
+
+}else if(pattern.matches("2")) {
+
+//        android.util.Log.d("razi", pattern);
+//        android.util.Log.d("razi", "in 2");
+//        android.util.Log.d("razi", currentText.getValue());
+    if (currentText.getValue().matches("^[$]\\d{2}.\\d{2}$") && activity.next == true) {
+//                                        "^XXXXXXXXXX\\d{4}$" \d{2}/\d{2}/\d{2} [0-3]?[0-9]/[0-3]?[0-9]/(?:[0-9]{2})?[0-9]{2} ^T\d{6}(C||c)$ DATE 09/08/18
+        android.util.Log.d("razi", "first");
+//        android.util.Log.d("razi", currentText.getValue());
+//                        lists.add(text);
+//                        activity.textDetected(text);
+                        activity.next = false;
+        //
+//                       breaks = true;
+//                        break;
+        activity.lists.add(new MyTextBlock(text));
+
+        canvas.drawText("Gas Cost found", left, bottom, textPaint);
+
+
+//                        activity.textDetected(text);
+//                        breaks = true;
+//                        break;
+    }
+    if (currentText.getValue().matches("^A(u||U)th\\s\\d{6}$")) {
+//                                        "^XXXXXXXXXX\\d{4}$" \d{2}/\d{2}/\d{2} [0-3]?[0-9]/[0-3]?[0-9]/(?:[0-9]{2})?[0-9]{2} ^T\d{6}(C||c)$ DATE 09/08/18
+        android.util.Log.d("razi", "second");
+//        android.util.Log.d("razi", currentText.getValue());
+        activity.lists.add(new MyTextBlock(text));
+        canvas.drawText("Auth Number found", left, bottom, textPaint);
+if( activity.next == false) {
+    activity.textDetected(activity.lists);
+    breaks = true;
+    break;
+}
+
+    }
+
+
+                //canvas.drawText(currentText.getValue(), left, bottom, textPaint);
             }
         }
     }
