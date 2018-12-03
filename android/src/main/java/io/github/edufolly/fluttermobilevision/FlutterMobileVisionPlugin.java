@@ -10,6 +10,7 @@ import android.support.v4.app.ActivityCompat;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.vision.barcode.Barcode;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,11 +47,12 @@ public class FlutterMobileVisionPlugin implements MethodCallHandler,
     private boolean useFlash = false;
     private boolean autoFocus = true;
     private int formats = Barcode.ALL_FORMATS;
-    private boolean multiple = false;
+    private boolean multiple = true;
     private boolean waitTap = false;
     private boolean showText = false;
     private int camera = CameraSource.CAMERA_FACING_BACK;
     private float fps = 15.0f;
+    private String pattern = "^T\\d{6}(C||c)$";
 
     /**
      * Plugin registration.
@@ -113,17 +115,22 @@ public class FlutterMobileVisionPlugin implements MethodCallHandler,
             double tfps = (double) arguments.get("fps");
             fps = (float) tfps;
         }
+        if(arguments.containsKey("pattern")){
+            pattern = (String) arguments.get("pattern");
+        }
+
 
         int rc = ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA);
-        if (rc != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(activity, new
-                    String[]{Manifest.permission.CAMERA}, RC_HANDLE_CAMERA_PERM);
 
-            rc = ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA);
             if (rc != PackageManager.PERMISSION_GRANTED) {
-                result.error("No camera permission.", null, null);
+                ActivityCompat.requestPermissions(activity, new
+                        String[]{Manifest.permission.CAMERA}, RC_HANDLE_CAMERA_PERM);
+
+                rc = ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA);
+                if (rc != PackageManager.PERMISSION_GRANTED) {
+                    result.error("No camera permission.", null, null);
+                }
             }
-        }
 
         Intent intent;
         int res;
@@ -150,6 +157,7 @@ public class FlutterMobileVisionPlugin implements MethodCallHandler,
         intent.putExtra(AbstractCaptureActivity.SHOW_TEXT, showText);
         intent.putExtra(AbstractCaptureActivity.CAMERA, camera);
         intent.putExtra(AbstractCaptureActivity.FPS, fps);
+        intent.putExtra(AbstractCaptureActivity.PATTERN, pattern.toString());
         activity.startActivityForResult(intent, res);
     }
 
@@ -208,7 +216,7 @@ public class FlutterMobileVisionPlugin implements MethodCallHandler,
                     Exception e = intent.getParcelableExtra(OcrCaptureActivity.ERROR);
                     result.error(e.getMessage(), null, e);
                 } else {
-                    result.error("Intent is null (the camera permission may not be granted)", null, null);
+                    //result.error("Intent is null (the camera permission may not be granted)", null, null);
                 }
             }
         } else if (requestCode == RC_FACE_DETECT) {
