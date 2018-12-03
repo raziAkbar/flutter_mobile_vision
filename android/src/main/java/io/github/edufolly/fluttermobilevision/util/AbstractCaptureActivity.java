@@ -34,6 +34,8 @@ public abstract class AbstractCaptureActivity<T extends GraphicOverlay.Graphic>
     public static final String SHOW_TEXT = "SHOW_TEXT";
     public static final String CAMERA = "CAMERA";
     public static final String FPS = "FPS";
+    public static final String PATTERN = "PATTERN"; // changed by me
+//            "PATTERN";
 
     public static final String OBJECT = "Object";
     public static final String ERROR = "Error";
@@ -49,6 +51,7 @@ public abstract class AbstractCaptureActivity<T extends GraphicOverlay.Graphic>
     protected boolean multiple;
     protected boolean waitTap;
     protected boolean showText;
+    protected String pattern;
     protected int camera;
     protected float fps;
 
@@ -73,6 +76,7 @@ public abstract class AbstractCaptureActivity<T extends GraphicOverlay.Graphic>
             showText = getIntent().getBooleanExtra(SHOW_TEXT, false);
             camera = getIntent().getIntExtra(CAMERA, CameraSource.CAMERA_FACING_BACK);
             fps = getIntent().getFloatExtra(FPS, 15.0f);
+            pattern = getIntent().getStringExtra(PATTERN); //changed by me
 
             int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
             if (rc == PackageManager.PERMISSION_GRANTED) {
